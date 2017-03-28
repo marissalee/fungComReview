@@ -1,0 +1,115 @@
+---
+title: "fungComReview"
+author: "Marissa Lee"
+date: "3/27/2017"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+data<-read.csv(file="data/fungComReview.csv")
+data<-data[,colnames(data)!="notes"] #get rid of the notes column
+
+library(splitstackshape) #for cSplit()
+library(plyr)
+library(ggplot2)
+
+ExpandMelt<-function(df, varName){
+  #expand
+  df.expanded<-cSplit(df, varName) 
+  
+  #melt
+  otherColNames<-colnames(df)[colnames(df) != varName]
+  df.expanded.melted<- melt(df.expanded, id=otherColNames) 
+  
+  #remove NAs
+  df.expanded.melted<-df.expanded.melted[!is.na(df.expanded.melted$value),] 
+  
+  #rename columns
+  setnames(df.expanded.melted, 'variable', paste('seq',varName, sep='_'))
+  setnames(df.expanded.melted, 'value', varName)
+  
+  return(df.expanded.melted)
+}
+```
+
+```{r overview, echo=FALSE}
+#number of articles
+numStudies<-dim(data)[1]
+paste("Total number of studies =", numStudies)
+
+#range of years published
+paste("Published from", range(data$year)[1], "to", range(data$year)[2])
+ggplot(data, aes(x=year)) + geom_histogram() + theme_bw()
+
+```
+
+
+```{r q1, echo=FALSE}
+#Methods for quantifying fungal communities
+testdata<-ExpandMelt(data, "FCmethod")
+
+ggplot(testdata, aes(x=FCmethod, y=year)) + geom_jitter(alpha=0.5, width=0.1) + ylab("Year of publication") + xlab("Fungal community identification method") + coord_flip() + theme_bw()
+
+```
+
+```{r q2, echo=FALSE}
+#Wood species studied
+testdata<-ExpandMelt(data, "woodSp")
+
+summ.testdata<-ddply(testdata, ~woodSp, summarize,
+      nStudies=length(year))
+summ.testdata <- transform(summ.testdata, 
+                          woodSp = reorder(woodSp, nStudies))
+
+sub.summ.testdata<-subset(summ.testdata, nStudies >=2)
+ggplot(sub.summ.testdata, aes(x=woodSp, y=nStudies)) + geom_bar(stat="identity") + coord_flip() + xlab("Wood species") + ylab("Number of studies") + theme_bw()
+
+```
+
+```{r q3, echo=FALSE}
+#Wood traits measured
+testdata<-ExpandMelt(data, "woodTraits")
+
+ggplot(testdata, aes(x=woodTraits, y=year)) + geom_jitter(alpha=0.5, width=0.1) + ylab("Year of publication") + xlab("Measured wood traits") + coord_flip() + theme_bw()
+
+summ.testdata<-ddply(testdata, ~woodTraits, summarize,
+      nStudies=length(year))
+summ.testdata <- transform(summ.testdata, 
+                          woodTraits = reorder(woodTraits, nStudies))
+
+#ggplot(summ.testdata, aes(x=woodTraits, y=nStudies)) + geom_bar(stat="identity") + coord_flip() + xlab("Wood traits") + ylab("Number of studies") + theme_bw()
+
+```
+
+```{r q4, echo=FALSE}
+#Signif wood traits
+testdata<-ExpandMelt(data, "signif_woodTraits")
+
+summ.testdata<-ddply(testdata, ~signif_woodTraits, summarize,
+      nStudies=length(year))
+summ.testdata <- transform(summ.testdata, 
+                          signif_woodTraits = reorder(signif_woodTraits, nStudies))
+
+summ.testdata1<-subset(summ.testdata, !signif_woodTraits %in% c("not analyzed","none"))
+ggplot(summ.testdata1, aes(x=signif_woodTraits, y=nStudies)) + geom_bar(stat="identity") + coord_flip() + xlab("Signif. wood traits") + ylab("Number of studies")+ theme_bw()
+
+```
+
+```{r q5, echo=FALSE}
+#Other significant predictors
+testdata<-ExpandMelt(data, "signif_otherPredictors")
+
+summ.testdata<-ddply(testdata, ~signif_otherPredictors, summarize,
+      nStudies=length(year))
+summ.testdata <- transform(summ.testdata, 
+                          signif_otherPredictors = 
+                            reorder(signif_otherPredictors, nStudies))
+
+#summ.testdata1<-subset(summ.testdata, !signif_woodTraits %in% c("not analyzed","none"))
+ggplot(summ.testdata, aes(x=signif_otherPredictors, y=nStudies)) + geom_bar(stat="identity") + coord_flip() + xlab("Signif. other traits") + ylab("Number of studies")
+
+```

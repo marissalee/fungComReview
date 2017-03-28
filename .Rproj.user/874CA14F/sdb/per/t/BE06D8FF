@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "---\ntitle: \"fungComReview\"\nauthor: \"Marissa Lee\"\ndate: \"3/27/2017\"\noutput:\n  pdf_document: default\n  html_document: default\n---\n\n```{r setup, include=FALSE}\nknitr::opts_chunk$set(echo = TRUE)\n\ndata<-read.csv(file=\"data/fungComReview.csv\")\ndata<-data[,colnames(data)!=\"notes\"] #get rid of the notes column\n\nlibrary(splitstackshape) #for cSplit()\nlibrary(plyr)\nlibrary(ggplot2)\n\nExpandMelt<-function(df, varName){\n  #expand\n  df.expanded<-cSplit(df, varName) \n  \n  #melt\n  otherColNames<-colnames(df)[colnames(df) != varName]\n  df.expanded.melted<- melt(df.expanded, id=otherColNames) \n  \n  #remove NAs\n  df.expanded.melted<-df.expanded.melted[!is.na(df.expanded.melted$value),] \n  \n  #rename columns\n  setnames(df.expanded.melted, 'variable', paste('seq',varName, sep='_'))\n  setnames(df.expanded.melted, 'value', varName)\n  \n  return(df.expanded.melted)\n}\n```\n\n```{r overview, echo=FALSE}\n#number of articles\nnumStudies<-dim(data)[1]\npaste(\"Total number of studies =\", numStudies)\n\n#range of years published\npaste(\"Published from\", range(data$year)[1], \"to\", range(data$year)[2])\nggplot(data, aes(x=year)) + geom_histogram() + theme_bw()\n\n```\n\n\n```{r q1, echo=FALSE}\n#Methods for quantifying fungal communities\ntestdata<-ExpandMelt(data, \"FCmethod\")\n\nggplot(testdata, aes(x=FCmethod, y=year)) + geom_jitter(alpha=0.5, width=0.1) + ylab(\"Year of publication\") + xlab(\"Fungal community identification method\") + coord_flip() + theme_bw()\n\n```\n\n```{r q2, echo=FALSE}\n#Wood species studied\ntestdata<-ExpandMelt(data, \"woodSp\")\n\nsumm.testdata<-ddply(testdata, ~woodSp, summarize,\n      nStudies=length(year))\nsumm.testdata <- transform(summ.testdata, \n                          woodSp = reorder(woodSp, nStudies))\n\nsub.summ.testdata<-subset(summ.testdata, nStudies >=2)\nggplot(sub.summ.testdata, aes(x=woodSp, y=nStudies)) + geom_bar(stat=\"identity\") + coord_flip() + xlab(\"Wood species\") + ylab(\"Number of studies\") + theme_bw()\n\n```\n\n```{r q3, echo=FALSE}\n#Wood traits measured\ntestdata<-ExpandMelt(data, \"woodTraits\")\n\nggplot(testdata, aes(x=woodTraits, y=year)) + geom_jitter(alpha=0.5, width=0.1) + ylab(\"Year of publication\") + xlab(\"Measured wood traits\") + coord_flip() + theme_bw()\n\nsumm.testdata<-ddply(testdata, ~woodTraits, summarize,\n      nStudies=length(year))\nsumm.testdata <- transform(summ.testdata, \n                          woodTraits = reorder(woodTraits, nStudies))\n\n#ggplot(summ.testdata, aes(x=woodTraits, y=nStudies)) + geom_bar(stat=\"identity\") + coord_flip() + xlab(\"Wood traits\") + ylab(\"Number of studies\") + theme_bw()\n\n```\n\n```{r q4, echo=FALSE}\n#Signif wood traits\ntestdata<-ExpandMelt(data, \"signif_woodTraits\")\n\nsumm.testdata<-ddply(testdata, ~signif_woodTraits, summarize,\n      nStudies=length(year))\nsumm.testdata <- transform(summ.testdata, \n                          signif_woodTraits = reorder(signif_woodTraits, nStudies))\n\nsumm.testdata1<-subset(summ.testdata, !signif_woodTraits %in% c(\"not analyzed\",\"none\"))\nggplot(summ.testdata1, aes(x=signif_woodTraits, y=nStudies)) + geom_bar(stat=\"identity\") + coord_flip() + xlab(\"Signif. wood traits\") + ylab(\"Number of studies\")+ theme_bw()\n\n```\n\n```{r q5, echo=FALSE}\n#Other significant predictors\ntestdata<-ExpandMelt(data, \"signif_otherPredictors\")\n\nsumm.testdata<-ddply(testdata, ~signif_otherPredictors, summarize,\n      nStudies=length(year))\nsumm.testdata <- transform(summ.testdata, \n                          signif_otherPredictors = \n                            reorder(signif_otherPredictors, nStudies))\n\n#summ.testdata1<-subset(summ.testdata, !signif_woodTraits %in% c(\"not analyzed\",\"none\"))\nggplot(summ.testdata, aes(x=signif_otherPredictors, y=nStudies)) + geom_bar(stat=\"identity\") + coord_flip() + xlab(\"Signif. other traits\") + ylab(\"Number of studies\")\n\n```\n",
+    "created" : 1490647204568.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "4121866176",
+    "id" : "BE06D8FF",
+    "lastKnownWriteTime" : 1490718218,
+    "last_content_update" : 1490718218690,
+    "path" : "~/Desktop/fungComReview/results.Rmd",
+    "project_path" : "results.Rmd",
+    "properties" : {
+        "chunk_output_type" : "console",
+        "content_preview_enabled" : "false",
+        "content_preview_inline" : "false",
+        "last_setup_crc32" : "",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}
